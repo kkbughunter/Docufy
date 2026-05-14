@@ -13,11 +13,11 @@ export function NotFound() {
           The page may have moved or the URL is incorrect.
         </p>
         <Link
-          to="/dashboard"
+          to="/"
           className="mt-6 inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-950 bg-slate-950 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
         >
           <Home size={16} aria-hidden="true" />
-          Go to Dashboard
+          Go Home
         </Link>
       </section>
     </main>

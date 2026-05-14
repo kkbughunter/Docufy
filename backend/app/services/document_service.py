@@ -52,6 +52,7 @@ class ProcessedDocument:
     filename: str
     kind: DocumentKind
     media_type: str
+    size_bytes: int
     data: str | None = None
     text: str | None = None
 
@@ -125,7 +126,12 @@ def _extract_xls_text(data: bytes) -> str:
     return "\n\n".join(chunks)
 
 
-async def process_upload(file: UploadFile) -> ProcessedDocument:
+async def process_upload(
+    file: UploadFile,
+    *,
+    max_file_size_bytes: int | None = None,
+    max_file_size_mb: int | None = None,
+) -> ProcessedDocument:
     filename = file.filename or "document"
     extension = Path(filename).suffix.lower()
     content_type = _normalize_mime(file.content_type)
@@ -144,10 +150,13 @@ async def process_upload(file: UploadFile) -> ProcessedDocument:
 
     data = await file.read()
 
-    if len(data) > settings.max_file_size_bytes:
+    size_limit_bytes = max_file_size_bytes or settings.max_file_size_bytes
+    size_limit_mb = max_file_size_mb or settings.max_file_size_mb
+
+    if len(data) > size_limit_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File must be {settings.max_file_size_mb} MB or smaller",
+            detail=f"File must be {size_limit_mb} MB or smaller",
         )
 
     if extension in IMAGE_MEDIA_TYPES:
@@ -155,6 +164,7 @@ async def process_upload(file: UploadFile) -> ProcessedDocument:
             filename=filename,
             kind="image",
             media_type=IMAGE_MEDIA_TYPES[extension],
+            size_bytes=len(data),
             data=base64.b64encode(data).decode("ascii"),
         )
 
@@ -163,6 +173,7 @@ async def process_upload(file: UploadFile) -> ProcessedDocument:
             filename=filename,
             kind="pdf",
             media_type="application/pdf",
+            size_bytes=len(data),
             data=base64.b64encode(data).decode("ascii"),
         )
 
@@ -179,5 +190,6 @@ async def process_upload(file: UploadFile) -> ProcessedDocument:
         filename=filename,
         kind="text",
         media_type=content_type,
+        size_bytes=len(data),
         text=_truncate_text(text),
     )

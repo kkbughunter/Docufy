@@ -1,9 +1,22 @@
-import axios, { AxiosError } from 'axios'
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '../store/authStore'
-import type { ApiGroup, AuthResponse, ExtractResponse, GroupPayload } from '../types'
+import type {
+  ApiGroup,
+  AuthResponse,
+  BillingPlan,
+  BillingSummary,
+  ExtractResponse,
+  GroupPayload,
+  UsageHistoryItem,
+  UsageSummary,
+} from '../types'
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8000'
+
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean
+}
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -11,6 +24,24 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+async function requestAccessTokenRefresh(refreshToken: string) {
+  const { data } = await axios.post<Pick<AuthResponse, 'access_token'>>(
+    `${API_BASE_URL}/auth/refresh`,
+    {
+      refresh_token: refreshToken,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+
+  return data
+}
+
+let refreshPromise: Promise<string> | null = null
 
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken
@@ -24,12 +55,46 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout()
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined
+    const status = error.response?.status
+
+    if (
+      status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      originalRequest.url?.includes('/auth/refresh')
+    ) {
+      return Promise.reject(error)
     }
 
-    return Promise.reject(error)
+    const { refreshToken, logout, setAccessToken } = useAuthStore.getState()
+    if (!refreshToken) {
+      logout()
+      return Promise.reject(error)
+    }
+
+    originalRequest._retry = true
+
+    try {
+      if (!refreshPromise) {
+        refreshPromise = requestAccessTokenRefresh(refreshToken)
+          .then((payload) => {
+            setAccessToken(payload.access_token)
+            return payload.access_token
+          })
+          .finally(() => {
+            refreshPromise = null
+          })
+      }
+
+      const newAccessToken = await refreshPromise
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+      return apiClient(originalRequest)
+    } catch (refreshError) {
+      logout()
+      return Promise.reject(refreshError)
+    }
   },
 )
 
@@ -64,10 +129,7 @@ export const authApi = {
     return data
   },
   async refresh(refreshToken: string) {
-    const { data } = await apiClient.post<Pick<AuthResponse, 'access_token'>>('/auth/refresh', {
-      refresh_token: refreshToken,
-    })
-    return data
+    return requestAccessTokenRefresh(refreshToken)
   },
 }
 
@@ -105,6 +167,48 @@ export const groupsApi = {
       },
     })
 
+    return data
+  },
+}
+
+export const billingApi = {
+  async plans() {
+    const { data } = await apiClient.get<BillingPlan[]>('/billing/plans')
+    return data
+  },
+  async summary() {
+    const { data } = await apiClient.get<BillingSummary>('/billing/summary')
+    return data
+  },
+  async startCheckout(planKey: string) {
+    const { data } = await apiClient.post<{ checkout_url: string; session_id: string }>(
+      '/billing/checkout',
+      { plan_key: planKey },
+    )
+    return data
+  },
+  async startPortal() {
+    const { data } = await apiClient.post<{ portal_url: string }>('/billing/portal')
+    return data
+  },
+}
+
+export const usageApi = {
+  async summary() {
+    const { data } = await apiClient.get<UsageSummary>('/usage/summary')
+    return data
+  },
+  async history(params?: { groupId?: string; limit?: number }) {
+    const search = new URLSearchParams()
+    if (params?.groupId) {
+      search.set('group_id', params.groupId)
+    }
+    if (params?.limit) {
+      search.set('limit', String(params.limit))
+    }
+
+    const query = search.toString()
+    const { data } = await apiClient.get<UsageHistoryItem[]>(`/usage/history${query ? `?${query}` : ''}`)
     return data
   },
 }

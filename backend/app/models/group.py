@@ -13,6 +13,7 @@ from sqlalchemy.types import Uuid
 from app.database import Base
 
 if TYPE_CHECKING:
+    from app.models.analytics import ApiRequestLog
     from app.models.user import User
 
 
@@ -57,3 +58,4 @@ class ApiGroup(Base):
     )
 
     user: Mapped[User] = relationship(back_populates="groups")
+    request_logs: Mapped[list[ApiRequestLog]] = relationship(back_populates="group")

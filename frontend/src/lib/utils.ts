@@ -22,6 +22,26 @@ export function formatDate(value?: string) {
   }).format(date)
 }
 
+export function formatDateTime(value?: string) {
+  if (!value) {
+    return 'Not available'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Not available'
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
 export function formatBytes(size: number) {
   if (size === 0) {
     return '0 B'
@@ -32,6 +52,26 @@ export function formatBytes(size: number) {
   const value = size / 1024 ** index
 
   return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`
+}
+
+export function formatNumber(value: number) {
+  return new Intl.NumberFormat().format(value)
+}
+
+export function formatDuration(value: number) {
+  if (value < 1000) {
+    return `${value} ms`
+  }
+
+  return `${(value / 1000).toFixed(2)} s`
+}
+
+export function formatPlanPrice(priceUsd?: number | null, intervalLabel?: string | null) {
+  if (priceUsd == null) {
+    return 'Custom'
+  }
+
+  return `$${priceUsd}/${intervalLabel ?? 'mo'}`
 }
 
 export function maskApiKey(apiKey?: string | null) {
@@ -52,4 +92,16 @@ export function stringifyJson(value: JsonValue) {
 
 export function getGroupStatus(group: ApiGroup) {
   return group.is_active === false ? 'Inactive' : 'Active'
+}
+
+export function getHistoryTone(statusCode: number): 'danger' | 'warning' | 'success' {
+  if (statusCode >= 500) {
+    return 'danger'
+  }
+
+  if (statusCode >= 400) {
+    return 'warning'
+  }
+
+  return 'success'
 }

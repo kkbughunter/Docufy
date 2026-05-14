@@ -12,11 +12,11 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { API_BASE_URL, getErrorMessage, groupsApi } from '../api/client'
+import { API_BASE_URL, getErrorMessage, groupsApi, usageApi } from '../api/client'
 import { JsonViewer } from '../components/JsonViewer'
 import { TestPanel } from '../components/TestPanel'
 import { Button, ErrorMessage, Panel, StatusBadge } from '../components/ui'
-import { formatDate, getGroupStatus, maskApiKey } from '../lib/utils'
+import { formatDate, formatDateTime, formatDuration, getGroupStatus, getHistoryTone, maskApiKey } from '../lib/utils'
 
 type SnippetTab = 'cURL' | 'Python' | 'JavaScript'
 
@@ -66,6 +66,15 @@ export function GroupDetail() {
   const groupQuery = useQuery({
     queryKey: ['groups', groupId],
     queryFn: () => groupsApi.get(groupId ?? ''),
+    enabled: Boolean(groupId),
+  })
+  const usageSummaryQuery = useQuery({
+    queryKey: ['usage', 'summary'],
+    queryFn: usageApi.summary,
+  })
+  const historyQuery = useQuery({
+    queryKey: ['usage', 'history', groupId],
+    queryFn: () => usageApi.history({ groupId: groupId ?? '', limit: 8 }),
     enabled: Boolean(groupId),
   })
 
@@ -125,11 +134,11 @@ export function GroupDetail() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Link
-            to="/dashboard"
+            to="/groups"
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline"
           >
             <ArrowLeft size={16} aria-hidden="true" />
-            Dashboard
+            Groups
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-950">{group.name}</h1>
@@ -149,6 +158,10 @@ export function GroupDetail() {
       </div>
 
       {rotateKey.isError ? <ErrorMessage>{getErrorMessage(rotateKey.error)}</ErrorMessage> : null}
+      {usageSummaryQuery.isError ? (
+        <ErrorMessage>{getErrorMessage(usageSummaryQuery.error)}</ErrorMessage>
+      ) : null}
+      {historyQuery.isError ? <ErrorMessage>{getErrorMessage(historyQuery.error)}</ErrorMessage> : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="grid content-start gap-6">
@@ -165,6 +178,14 @@ export function GroupDetail() {
               <div>
                 <dt className="text-slate-500">Created</dt>
                 <dd className="mt-1 font-medium text-slate-950">{formatDate(group.created_at)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Requests Remaining</dt>
+                <dd className="mt-1 font-medium text-slate-950">
+                  {usageSummaryQuery.data?.requests_remaining != null
+                    ? usageSummaryQuery.data.requests_remaining
+                    : 'Unlimited'}
+                </dd>
               </div>
               <div>
                 <dt className="text-slate-500">Document Description</dt>
@@ -290,6 +311,42 @@ export function GroupDetail() {
           </Panel>
         </div>
       </div>
+
+      <Panel
+        title="Recent Requests"
+        description="Latest extraction attempts for this API group."
+      >
+        {(historyQuery.data ?? []).length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-200 px-4 py-10 text-sm text-slate-500">
+            No requests for this group yet.
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {(historyQuery.data ?? []).map((entry) => (
+              <div
+                key={entry.id}
+                className="flex flex-col gap-3 rounded-lg border border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-slate-950">{entry.file_name}</span>
+                    <StatusBadge tone={getHistoryTone(entry.status_code)}>
+                      {entry.status_code}
+                    </StatusBadge>
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {formatDateTime(entry.created_at)} · {entry.endpoint_path}
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-slate-600">
+                  <span>{formatDuration(entry.duration_ms)}</span>
+                  <span className="capitalize">{entry.auth_mode}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
     </div>
   )
 }

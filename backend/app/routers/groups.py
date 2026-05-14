@@ -11,6 +11,7 @@ from app.middleware.auth_middleware import get_current_user
 from app.models.group import ApiGroup, generate_api_key
 from app.models.user import User
 from app.schemas.group import GroupCreate, GroupResponse, GroupUpdate
+from app.services.usage_service import ensure_group_limit
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
@@ -46,6 +47,7 @@ def create_group(
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> ApiGroup:
+    ensure_group_limit(db, current_user)
     group = ApiGroup(user_id=current_user.id, **payload.model_dump())
     db.add(group)
 

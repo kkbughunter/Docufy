@@ -6,7 +6,7 @@ import { formatBytes } from '../lib/utils'
 import { Button, ErrorMessage, StatusBadge } from './ui'
 import { JsonViewer } from './JsonViewer'
 
-const maxFileSizeBytes = 10 * 1024 * 1024
+const maxFileSizeBytes = 25 * 1024 * 1024
 const acceptedFileTypes =
   '.pdf,.png,.jpg,.jpeg,.webp,.docx,.xlsx,.xls,.csv,.txt,.md,.json,application/pdf,image/png,image/jpeg,image/webp,text/plain,text/csv,application/json'
 
@@ -33,7 +33,7 @@ export function TestPanel({ groupId }: TestPanelProps) {
 
     if (selectedFile.size > maxFileSizeBytes) {
       setFile(null)
-      setLocalError('File must be 10 MB or smaller.')
+      setLocalError('File must be 25 MB or smaller. Your plan limit is still checked on the server.')
       return
     }
 
@@ -73,7 +73,7 @@ export function TestPanel({ groupId }: TestPanelProps) {
         </div>
         <p className="mt-3 text-sm font-medium text-slate-900">Upload a document to test</p>
         <p className="mt-1 text-xs leading-5 text-slate-500">
-          PDF, PNG, JPG, DOCX, XLSX, CSV, TXT, MD, or JSON up to 10 MB.
+          PDF, PNG, JPG, DOCX, XLSX, CSV, TXT, MD, or JSON up to 25 MB.
         </p>
         <Button className="mt-4" variant="secondary" onClick={() => inputRef.current?.click()}>
           <FileUp size={16} aria-hidden="true" />

@@ -6,7 +6,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
 from app.config import settings
-from app.routers import auth, extract, groups
+from app.routers import auth, billing, extract, groups, usage
 
 limiter = Limiter(
     key_func=get_remote_address,
@@ -29,6 +29,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(groups.router)
 app.include_router(extract.router)
+app.include_router(billing.router)
+app.include_router(usage.router)
 
 
 @app.get("/health", tags=["health"])

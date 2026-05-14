@@ -148,7 +148,7 @@ function GroupForm({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Link
-            to={isEditMode && groupId ? `/groups/${groupId}` : '/dashboard'}
+            to={isEditMode && groupId ? `/groups/${groupId}` : '/groups'}
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline"
           >
             <ArrowLeft size={16} aria-hidden="true" />

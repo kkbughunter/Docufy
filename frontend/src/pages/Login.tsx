@@ -49,6 +49,10 @@ export function Login() {
         </div>
 
         <p className="mt-5 text-center text-sm text-slate-500">
+          <Link className="font-medium text-slate-700 underline-offset-4 hover:underline" to="/">
+            Back to home
+          </Link>
+          <span className="mx-2 text-slate-300">/</span>
           New here?{' '}
           <Link className="font-medium text-slate-950 underline-offset-4 hover:underline" to="/register">
             Continue with Google to create an account
