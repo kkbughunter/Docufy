@@ -1,0 +1,9 @@
+<svg width="260" height="80" viewBox="0 0 260 80" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Docufy wordmark</title>
+  <desc>Docufy text wordmark with blue underline accent</desc>
+  <rect width="260" height="80" rx="0" fill="white"/>
+  <!-- Wordmark -->
+  <text x="16" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="52" font-weight="500" fill="#111111">Docufy</text>
+  <!-- Blue accent underline -->
+  <rect x="16" y="64" width="196" height="3" rx="1.5" fill="#4F8EF7" opacity="0.8"/>
+</svg>

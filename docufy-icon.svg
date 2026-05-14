@@ -1,0 +1,18 @@
+<svg width="120" height="120" viewBox="0 0 120 120" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Docufy icon</title>
+  <desc>Docufy document icon with curly braces</desc>
+  <rect width="120" height="120" rx="0" fill="white"/>
+  <!-- Document base -->
+  <rect x="22" y="14" width="76" height="92" rx="8" fill="none" stroke="#111111" stroke-width="2.5"/>
+  <!-- Folded corner -->
+  <path d="M74 14 L98 38" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M74 14 L74 38 L98 38" fill="white" stroke="#111111" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Left brace -->
+  <path d="M44 68 C40 68 38 66 38 62 L38 58 C38 54 36 52 32 52 C36 52 38 50 38 46 L38 42 C38 38 40 36 44 36"
+        fill="none" stroke="#4F8EF7" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Right brace -->
+  <path d="M76 36 C80 36 82 38 82 42 L82 46 C82 50 84 52 88 52 C84 52 82 54 82 58 L82 62 C82 66 80 68 76 68"
+        fill="none" stroke="#4F8EF7" stroke-width="2.2" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="60" cy="52" r="2.8" fill="#4F8EF7"/>
+</svg>

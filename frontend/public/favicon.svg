@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Docufy favicon</title>
+  <desc>Docufy app icon for favicon and app store use</desc>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#111111"/>
+  <!-- Document base -->
+  <rect x="106" y="86" width="220" height="272" rx="22" fill="none" stroke="#ffffff" stroke-width="14"/>
+  <!-- Folded corner -->
+  <path d="M256 86 L326 156" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+  <path d="M256 86 L256 156 L326 156" fill="#111111" stroke="#ffffff" stroke-width="14" stroke-linejoin="round"/>
+  <!-- Left brace -->
+  <path d="M160 310 C144 310 136 302 136 286 L136 270 C136 254 128 246 112 246 C128 246 136 238 136 222 L136 206 C136 190 144 182 160 182"
+        fill="none" stroke="#6BA5FF" stroke-width="13" stroke-linecap="round"/>
+  <!-- Right brace -->
+  <path d="M256 182 C272 182 280 190 280 206 L280 222 C280 238 288 246 304 246 C288 246 280 254 280 270 L280 286 C280 302 272 310 256 310"
+        fill="none" stroke="#6BA5FF" stroke-width="13" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="208" cy="246" r="11" fill="#6BA5FF"/>
+  <!-- Bottom tagline text -->
+  <text x="256" y="430" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="56" font-weight="500" fill="#ffffff" text-anchor="middle">Docufy</text>
+</svg>
