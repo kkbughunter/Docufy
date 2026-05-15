@@ -51,9 +51,9 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             contact_only=False,
             internal=True,
             features=(
-                "1 API group",
                 "5 document extraction calls",
                 "5 MB max document size",
+                "1 API group",
             ),
             limits=PlanLimits(max_groups=1, max_requests=5, max_file_size_mb=5),
         ),
@@ -69,9 +69,10 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             contact_only=False,
             internal=False,
             features=(
-                "5 API groups",
                 "750 document extraction calls",
                 "5 MB max document size",
+                "5 API groups",
+                "Recharge anytime when credits end"
             ),
             limits=PlanLimits(max_groups=5, max_requests=750, max_file_size_mb=5),
             dodo_product_id=settings.dodo_starter_product_id,
@@ -88,9 +89,9 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             contact_only=False,
             internal=False,
             features=(
-                "10 API groups",
                 "2000 document extraction calls",
                 "10 MB max document size",
+                "10 API groups",
                 "Recharge anytime when credits end",
             ),
             limits=PlanLimits(max_groups=10, max_requests=2_000, max_file_size_mb=10),
@@ -108,9 +109,10 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             contact_only=False,
             internal=False,
             features=(
-                "20 API groups",
                 "10,000 document extraction calls",
                 "25 MB max document size",
+                "20 API groups",
+                "Recharge anytime when credits end"
             ),
             limits=PlanLimits(max_groups=20, max_requests=10_000, max_file_size_mb=25),
             dodo_product_id=settings.dodo_scale_product_id,
@@ -158,4 +160,4 @@ def resolve_plan_from_product_id(product_id: str | None) -> PlanDefinition | Non
 
 def get_effective_plan(user: User, now: datetime | None = None) -> PlanDefinition:
     del now
-    return get_plan(user.plan_key)
+    return get_plan(user.subscription.plan_key if user.subscription is not None else "trial")

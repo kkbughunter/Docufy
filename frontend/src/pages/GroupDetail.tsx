@@ -4,8 +4,6 @@ import {
   Check,
   Code2,
   Copy,
-  Eye,
-  EyeOff,
   KeyRound,
   Pencil,
   RotateCcw,
@@ -16,7 +14,7 @@ import { API_BASE_URL, getErrorMessage, groupsApi, usageApi } from '../api/clien
 import { JsonViewer } from '../components/JsonViewer'
 import { TestPanel } from '../components/TestPanel'
 import { Button, ErrorMessage, Panel, StatusBadge } from '../components/ui'
-import { formatDate, formatDateTime, formatDuration, getGroupStatus, getHistoryTone, maskApiKey } from '../lib/utils'
+import { formatDate, formatDateTime, formatDuration, getGroupStatus, getHistoryTone } from '../lib/utils'
 
 type SnippetTab = 'cURL' | 'Python' | 'JavaScript'
 
@@ -59,7 +57,15 @@ console.log(result);`
 export function GroupDetail() {
   const { groupId } = useParams()
   const queryClient = useQueryClient()
-  const [showKey, setShowKey] = useState(false)
+  const [issuedApiKey, setIssuedApiKey] = useState<string | null>(
+    groupId ? sessionStorage.getItem(`docufy:group-api-key:${groupId}`) : null,
+  )
+  const [issuedApiKeyNotice, setIssuedApiKeyNotice] = useState<string>(
+    groupId
+      ? sessionStorage.getItem(`docufy:group-api-key-notice:${groupId}`) ??
+          'Download/copy the key now. You will not be able to view it again after closing this window.'
+      : 'Download/copy the key now. You will not be able to view it again after closing this window.',
+  )
   const [copied, setCopied] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<SnippetTab>('cURL')
 
@@ -80,18 +86,23 @@ export function GroupDetail() {
 
   const rotateKey = useMutation({
     mutationFn: () => groupsApi.rotateKey(groupId ?? ''),
-    onSuccess: (updatedGroup) => {
-      queryClient.setQueryData(['groups', groupId], updatedGroup)
+    onSuccess: (result) => {
+      queryClient.setQueryData(['groups', groupId], {
+        ...result,
+      })
       queryClient.invalidateQueries({ queryKey: ['groups'] })
-      setShowKey(true)
+      setIssuedApiKey(result.api_key)
+      setIssuedApiKeyNotice(result.api_key_notice)
+      if (groupId) {
+        sessionStorage.setItem(`docufy:group-api-key:${groupId}`, result.api_key)
+        sessionStorage.setItem(`docufy:group-api-key-notice:${groupId}`, result.api_key_notice)
+      }
     },
   })
 
   const group = groupQuery.data
   const endpoint = group ? `${API_BASE_URL}/extract/${group.id}` : ''
-  const apiKey = group?.api_key ?? ''
-  const visibleKey = showKey && apiKey ? apiKey : maskApiKey(apiKey)
-  const snippetApiKey = showKey && apiKey ? apiKey : '<YOUR_API_KEY>'
+  const snippetApiKey = issuedApiKey ?? '<YOUR_API_KEY>'
   const snippet = useMemo(
     () => buildSnippet(activeTab, endpoint, snippetApiKey),
     [activeTab, endpoint, snippetApiKey],
@@ -179,29 +190,8 @@ export function GroupDetail() {
           </div>
 
           <div className="grid gap-2">
-            <span className="text-sm font-medium text-slate-800">Auth Header</span>
-            <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <KeyRound size={16} className="text-slate-500" aria-hidden="true" />
-              <code className="min-w-0 flex-1 truncate text-xs text-slate-700">
-                X-API-Key: {visibleKey}
-              </code>
-              <Button size="sm" variant="secondary" onClick={() => setShowKey((value) => !value)}>
-                {showKey ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
-                {showKey ? 'Hide' : 'Reveal'}
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={!apiKey}
-                onClick={() => copyText('api-key', apiKey)}
-              >
-                {copied === 'api-key' ? (
-                  <Check size={14} aria-hidden="true" />
-                ) : (
-                  <Copy size={14} aria-hidden="true" />
-                )}
-                Copy
-              </Button>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium text-slate-800">Auth Header</span>
               <Button
                 size="sm"
                 variant="danger"
@@ -209,9 +199,40 @@ export function GroupDetail() {
                 onClick={() => rotateKey.mutate()}
               >
                 <RotateCcw size={14} aria-hidden="true" />
-                {rotateKey.isPending ? 'Rotating...' : 'Rotate'}
+                {rotateKey.isPending ? 'Rotating...' : 'Generate New Key'}
               </Button>
             </div>
+            <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <KeyRound size={16} className="text-slate-500" aria-hidden="true" />
+              <code className="min-w-0 flex-1 truncate text-xs text-slate-700">
+                X-API-Key: {'<hidden>'}
+              </code>
+            </div>
+            {issuedApiKey ? (
+              <div className="grid gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
+                <div className="text-xs font-medium text-amber-900">{issuedApiKeyNotice}</div>
+                <div className="flex min-w-0 items-center gap-2">
+                  <code className="min-w-0 flex-1 truncate rounded-md border border-amber-300 bg-white px-2 py-1 text-xs text-slate-700">
+                    {issuedApiKey}
+                  </code>
+                  <Button size="sm" variant="secondary" onClick={() => copyText('api-key', issuedApiKey)}>
+                    {copied === 'api-key' ? (
+                      <Check size={14} aria-hidden="true" />
+                    ) : (
+                      <Copy size={14} aria-hidden="true" />
+                    )}
+                    Copy
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs text-slate-500">
+                Generate a new key to view and copy it once.
+              </div>
+            )}
+          </div>
+          <div className="text-xs text-slate-500">
+            API keys are never shown again in this app after the window is closed.
           </div>
         </div>
       </Panel>

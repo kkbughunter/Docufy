@@ -13,6 +13,7 @@ from app.database import Base
 if TYPE_CHECKING:
     from app.models.analytics import ApiRequestLog
     from app.models.group import ApiGroup
+    from app.models.subscription import UserSubscription
 
 
 class User(Base):
@@ -24,13 +25,6 @@ class User(Base):
     google_sub: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
     full_name: Mapped[str | None] = mapped_column(String(255))
     avatar_url: Mapped[str | None] = mapped_column(String(2048))
-    plan_key: Mapped[str] = mapped_column(String(50), default="trial", nullable=False)
-    billing_status: Mapped[str] = mapped_column(String(50), default="trial", nullable=False)
-    dodo_customer_id: Mapped[str | None] = mapped_column(String(255), index=True)
-    dodo_subscription_id: Mapped[str | None] = mapped_column(String(255), index=True)
-    dodo_product_id: Mapped[str | None] = mapped_column(String(255))
-    billing_period_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    billing_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -52,4 +46,10 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,
+    )
+    subscription: Mapped[UserSubscription | None] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        uselist=False,
     )

@@ -23,6 +23,7 @@ from app.services.billing_service import (
     verify_webhook_signature,
 )
 from app.services.plan_service import PlanDefinition, get_effective_plan, get_public_plans
+from app.services.subscription_service import get_or_create_user_subscription
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
@@ -58,6 +59,7 @@ def get_billing_summary(
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> BillingSummaryResponse:
+    subscription = get_or_create_user_subscription(db, current_user)
     current_plan = get_effective_plan(current_user)
     public_plans = [_to_plan_response(plan) for plan in get_public_plans()]
     recent_events = list_recent_billing_events(db, current_user, limit=12)
@@ -76,11 +78,11 @@ def get_billing_summary(
 
     return BillingSummaryResponse(
         plan_key=current_plan.key,
-        billing_status=current_user.billing_status,
-        dodo_customer_id=current_user.dodo_customer_id,
-        dodo_subscription_id=current_user.dodo_subscription_id,
-        billing_period_start=current_user.billing_period_start,
-        billing_period_end=current_user.billing_period_end,
+        billing_status=subscription.billing_status,
+        dodo_customer_id=subscription.dodo_customer_id,
+        dodo_subscription_id=subscription.dodo_subscription_id,
+        billing_period_start=subscription.billing_period_start,
+        billing_period_end=subscription.billing_period_end,
         last_successful_purchase_at=last_successful_purchase_at,
         last_failed_purchase_at=last_failed_purchase_at,
         current_plan=_to_plan_response(current_plan),

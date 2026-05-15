@@ -16,6 +16,7 @@ from app.schemas.usage import (
     UsageTotalsResponse,
     UsageWindowResponse,
 )
+from app.services.subscription_service import get_or_create_user_subscription
 from app.services.usage_service import get_usage_snapshot
 
 router = APIRouter(prefix="/usage", tags=["usage"])
@@ -26,6 +27,7 @@ def get_usage_summary(
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> UsageSummaryResponse:
+    subscription = get_or_create_user_subscription(db, current_user)
     snapshot = get_usage_snapshot(db, current_user)
     group_limit = snapshot.plan.limits.max_groups
     request_limit = snapshot.plan.limits.max_requests
@@ -37,7 +39,7 @@ def get_usage_summary(
 
     return UsageSummaryResponse(
         plan_key=snapshot.plan.key,
-        billing_status=current_user.billing_status,
+        billing_status=subscription.billing_status,
         groups_used=snapshot.groups_used,
         groups_remaining=groups_remaining,
         requests_remaining=requests_remaining,

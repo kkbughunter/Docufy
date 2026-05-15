@@ -28,6 +28,7 @@ from app.services.google_oauth_service import (
     build_google_authorization_url,
     exchange_code_for_google_profile,
 )
+from app.services.subscription_service import get_or_create_user_subscription
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -124,6 +125,8 @@ async def google_callback(
         db.rollback()
         return _redirect_with_error("A Google account is already linked to another user")
 
+    get_or_create_user_subscription(db, user)
+    db.commit()
     db.refresh(user)
     return _redirect_with_tokens(user, next_path)
 

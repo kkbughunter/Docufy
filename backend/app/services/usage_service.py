@@ -34,7 +34,8 @@ class UsageSnapshot:
 
 def get_usage_window(user: User, now: datetime | None = None) -> UsageWindow:
     del now
-    return UsageWindow(started_at=user.billing_period_start or user.created_at, ends_at=None)
+    period_start = user.subscription.billing_period_start if user.subscription is not None else None
+    return UsageWindow(started_at=period_start or user.created_at, ends_at=None)
 
 
 def count_groups(db: Session, user: User) -> int:

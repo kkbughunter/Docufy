@@ -111,6 +111,15 @@ function GroupForm({
       return groupsApi.create(payload)
     },
     onSuccess: (group) => {
+      if ('api_key' in group && typeof group.api_key === 'string') {
+        sessionStorage.setItem(`docufy:group-api-key:${group.id}`, group.api_key)
+        sessionStorage.setItem(
+          `docufy:group-api-key-notice:${group.id}`,
+          'api_key_notice' in group && typeof group.api_key_notice === 'string'
+            ? group.api_key_notice
+            : 'Download/copy the key now. You will not be able to view it again after closing this window.',
+        )
+      }
       queryClient.invalidateQueries({ queryKey: ['groups'] })
       queryClient.invalidateQueries({ queryKey: ['groups', group.id] })
       navigate(`/groups/${group.id}`)

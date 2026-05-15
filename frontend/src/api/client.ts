@@ -2,6 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '../store/authStore'
 import type {
   ApiGroup,
+  ApiKeyIssue,
   AuthResponse,
   BillingPlan,
   BillingSummary,
@@ -139,7 +140,7 @@ export const groupsApi = {
     return data
   },
   async create(payload: GroupPayload) {
-    const { data } = await apiClient.post<ApiGroup>('/groups', payload)
+    const { data } = await apiClient.post<ApiKeyIssue>('/groups', payload)
     return data
   },
   async get(groupId: string) {
@@ -154,7 +155,7 @@ export const groupsApi = {
     await apiClient.delete(`/groups/${groupId}`)
   },
   async rotateKey(groupId: string) {
-    const { data } = await apiClient.post<ApiGroup>(`/groups/${groupId}/rotate-key`)
+    const { data } = await apiClient.post<ApiKeyIssue>(`/groups/${groupId}/rotate-key`)
     return data
   },
   async extract(groupId: string, file: File) {

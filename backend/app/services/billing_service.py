@@ -14,8 +14,10 @@ from standardwebhooks.webhooks import Webhook
 
 from app.config import settings
 from app.models.analytics import BillingWebhookEvent
+from app.models.subscription import UserSubscription
 from app.models.user import User
 from app.services.plan_service import PlanDefinition, get_plan, resolve_plan_from_product_id
+from app.services.subscription_service import get_or_create_user_subscription
 
 
 class DodoPaymentsError(Exception):
@@ -39,6 +41,7 @@ def _auth_headers() -> dict[str, str]:
 
 
 async def create_checkout_session(user: User, plan_key: str) -> dict[str, str]:
+    subscription = user.subscription
     plan = get_plan(plan_key)
     if plan.internal or plan.contact_only:
         raise HTTPException(
@@ -53,8 +56,8 @@ async def create_checkout_session(user: User, plan_key: str) -> dict[str, str]:
         )
 
     customer: dict[str, Any]
-    if user.dodo_customer_id:
-        customer = {"customer_id": user.dodo_customer_id}
+    if subscription is not None and subscription.dodo_customer_id:
+        customer = {"customer_id": subscription.dodo_customer_id}
     else:
         customer = {"email": user.email, "name": user.full_name or user.email}
 
@@ -99,7 +102,8 @@ async def create_checkout_session(user: User, plan_key: str) -> dict[str, str]:
 
 
 async def create_customer_portal_session(user: User) -> str:
-    if not user.dodo_customer_id:
+    subscription = user.subscription
+    if subscription is None or not subscription.dodo_customer_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No Dodo customer record is linked to this account yet.",
@@ -107,7 +111,7 @@ async def create_customer_portal_session(user: User) -> str:
 
     async with httpx.AsyncClient(timeout=20.0) as client:
         response = await client.post(
-            f"{settings.dodo_api_base_url}/customers/{user.dodo_customer_id}/customer-portal/session",
+            f"{settings.dodo_api_base_url}/customers/{subscription.dodo_customer_id}/customer-portal/session",
             headers=_auth_headers(),
             params={"return_url": settings.frontend_app_url},
         )
@@ -194,7 +198,10 @@ def _resolve_user_for_webhook(db: Session, event_data: dict[str, Any]) -> User |
     customer = event_data.get("customer") or {}
     customer_id = customer.get("customer_id")
     if customer_id:
-        user = db.scalar(select(User).where(User.dodo_customer_id == str(customer_id)))
+        subscription = db.scalar(
+            select(UserSubscription).where(UserSubscription.dodo_customer_id == str(customer_id))
+        )
+        user = subscription.user if subscription is not None else None
         if user is not None:
             return user
 
@@ -206,7 +213,10 @@ def _resolve_user_for_webhook(db: Session, event_data: dict[str, Any]) -> User |
 
     subscription_id = event_data.get("subscription_id")
     if subscription_id:
-        return db.scalar(select(User).where(User.dodo_subscription_id == str(subscription_id)))
+        subscription = db.scalar(
+            select(UserSubscription).where(UserSubscription.dodo_subscription_id == str(subscription_id))
+        )
+        return subscription.user if subscription is not None else None
 
     return None
 
@@ -294,6 +304,7 @@ def sync_billing_event(
     if isinstance(event_data, dict):
         user = _resolve_user_for_webhook(db, event_data)
         if user is not None:
+            subscription = get_or_create_user_subscription(db, user)
             customer = event_data.get("customer") or {}
             product_id = _extract_product_id(event_data)
             resolved_plan = resolve_plan_from_product_id(product_id)
@@ -301,19 +312,21 @@ def sync_billing_event(
             plan = resolved_plan or _resolve_plan_from_metadata(metadata_plan_key)
             event_time = _extract_event_datetime(event_data)
 
-            user.dodo_customer_id = customer.get("customer_id") or user.dodo_customer_id
-            user.dodo_subscription_id = event_data.get("subscription_id") or user.dodo_subscription_id
-            user.dodo_product_id = product_id or user.dodo_product_id
-            user.billing_status = _normalize_billing_status(event_type, event_data)
+            subscription.dodo_customer_id = customer.get("customer_id") or subscription.dodo_customer_id
+            subscription.dodo_subscription_id = (
+                event_data.get("subscription_id") or subscription.dodo_subscription_id
+            )
+            subscription.dodo_product_id = product_id or subscription.dodo_product_id
+            subscription.billing_status = _normalize_billing_status(event_type, event_data)
 
             success_events = {"payment.succeeded", "subscription.active", "subscription.renewed"}
             if event_type in success_events and plan is not None and plan.key != "contact":
-                user.plan_key = plan.key
-                user.billing_period_start = event_time
-                user.billing_period_end = None
+                subscription.plan_key = plan.key
+                subscription.billing_period_start = event_time
+                subscription.billing_period_end = None
 
             if event_type == "subscription.plan_changed" and plan is not None and plan.key != "contact":
-                user.plan_key = plan.key
+                subscription.plan_key = plan.key
 
     event_record.processed_at = datetime.now(UTC)
     db.commit()
@@ -340,7 +353,13 @@ def _event_matches_user(user: User, event_data: dict[str, Any]) -> bool:
 
     customer = event_data.get("customer") or {}
     customer_id = customer.get("customer_id")
-    if customer_id and user.dodo_customer_id and str(customer_id) == user.dodo_customer_id:
+    subscription = user.subscription
+    if (
+        customer_id
+        and subscription is not None
+        and subscription.dodo_customer_id
+        and str(customer_id) == subscription.dodo_customer_id
+    ):
         return True
 
     email = customer.get("email")
@@ -348,7 +367,12 @@ def _event_matches_user(user: User, event_data: dict[str, Any]) -> bool:
         return True
 
     subscription_id = event_data.get("subscription_id")
-    if subscription_id and user.dodo_subscription_id and str(subscription_id) == user.dodo_subscription_id:
+    if (
+        subscription_id
+        and subscription is not None
+        and subscription.dodo_subscription_id
+        and str(subscription_id) == subscription.dodo_subscription_id
+    ):
         return True
 
     return False

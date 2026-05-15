@@ -1,6 +1,6 @@
-import { Calendar, FileText, KeyRound, Pencil, Play, Trash2 } from 'lucide-react'
+import { Calendar, FileText, Pencil, Play, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { cn, formatDate, getGroupStatus, maskApiKey } from '../lib/utils'
+import { cn, formatDate, getGroupStatus } from '../lib/utils'
 import type { ApiGroup } from '../types'
 import { Button, StatusBadge } from './ui'
 
@@ -24,7 +24,7 @@ export function GroupCard({ group, isDeleting = false, onDelete }: GroupCardProp
           {group.description ? (
             <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{group.description}</p>
           ) : null}
-          <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-3">
+          <div className="mt-4 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
             <span className="flex min-w-0 items-center gap-2">
               <FileText size={15} aria-hidden="true" />
               <span className="truncate">{group.document_type || 'Custom'}</span>
@@ -32,10 +32,6 @@ export function GroupCard({ group, isDeleting = false, onDelete }: GroupCardProp
             <span className="flex min-w-0 items-center gap-2">
               <Calendar size={15} aria-hidden="true" />
               <span className="truncate">{formatDate(group.created_at)}</span>
-            </span>
-            <span className="flex min-w-0 items-center gap-2">
-              <KeyRound size={15} aria-hidden="true" />
-              <code className="truncate font-mono text-xs">{maskApiKey(group.api_key)}</code>
             </span>
           </div>
         </div>

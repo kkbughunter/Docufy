@@ -32,9 +32,15 @@ class GroupUpdate(GroupBase):
 class GroupResponse(GroupBase):
     id: UUID
     user_id: UUID
-    api_key: str
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GroupKeyIssueResponse(GroupResponse):
+    api_key: str
+    api_key_notice: str = (
+        "Download/copy the key now. You will not be able to view it again after closing this window."
+    )

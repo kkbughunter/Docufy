@@ -10,7 +10,7 @@ from app.database import get_db
 from app.middleware.auth_middleware import get_current_user
 from app.models.group import ApiGroup, generate_api_key
 from app.models.user import User
-from app.schemas.group import GroupCreate, GroupResponse, GroupUpdate
+from app.schemas.group import GroupCreate, GroupKeyIssueResponse, GroupResponse, GroupUpdate
 from app.services.usage_service import ensure_group_limit
 
 router = APIRouter(prefix="/groups", tags=["groups"])
@@ -41,12 +41,12 @@ def list_groups(
     )
 
 
-@router.post("", response_model=GroupResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=GroupKeyIssueResponse, status_code=status.HTTP_201_CREATED)
 def create_group(
     payload: GroupCreate,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> ApiGroup:
+) -> GroupKeyIssueResponse:
     ensure_group_limit(db, current_user)
     group = ApiGroup(user_id=current_user.id, **payload.model_dump())
     db.add(group)
@@ -61,7 +61,7 @@ def create_group(
         ) from exc
 
     db.refresh(group)
-    return group
+    return GroupKeyIssueResponse.model_validate(group, from_attributes=True)
 
 
 @router.get("/{group_id}", response_model=GroupResponse)
@@ -101,12 +101,12 @@ def delete_group(
     db.commit()
 
 
-@router.post("/{group_id}/rotate-key", response_model=GroupResponse)
+@router.post("/{group_id}/rotate-key", response_model=GroupKeyIssueResponse)
 def rotate_api_key(
     group_id: UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> ApiGroup:
+) -> GroupKeyIssueResponse:
     group = get_owned_group(db, current_user, group_id)
     group.api_key = generate_api_key()
 
@@ -119,4 +119,4 @@ def rotate_api_key(
         db.commit()
 
     db.refresh(group)
-    return group
+    return GroupKeyIssueResponse.model_validate(group, from_attributes=True)
