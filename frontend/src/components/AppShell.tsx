@@ -79,7 +79,7 @@ export function AppShell() {
 
   const sidebar = (
     <div className="flex h-full flex-col">
-      <div className="border-b border-slate-200 px-4 py-5">
+      <div className="border-b border-slate-200 px-4 py-3">
         <Link to="/dashboard" className="flex items-center gap-3 text-slate-950">
           <span className="inline-flex size-10 items-center justify-center rounded-lg bg-slate-950 text-white">
             <Workflow size={19} aria-hidden="true" />
@@ -147,8 +147,7 @@ export function AppShell() {
                 <Menu size={16} aria-hidden="true" />
               </IconButton>
               <div>
-                <div className="text-sm font-medium text-slate-500">Workspace</div>
-                <div className="text-base font-semibold text-slate-950">Docufy Control Plane</div>
+                <div className="text-x font-bold  text-slate-600">Hello, {user?.email.split('@')[0]}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">

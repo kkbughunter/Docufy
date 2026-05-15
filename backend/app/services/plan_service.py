@@ -41,7 +41,7 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
     return {
         "trial": PlanDefinition(
             key="trial",
-            name="Trial",
+            name="Free",
             description="Free trial for testing extraction before you recharge.",
             price_usd=0,
             interval_label=None,
@@ -52,10 +52,10 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             internal=True,
             features=(
                 "1 API group",
-                "3 document extraction calls",
+                "5 document extraction calls",
                 "5 MB max document size",
             ),
-            limits=PlanLimits(max_groups=1, max_requests=3, max_file_size_mb=5),
+            limits=PlanLimits(max_groups=1, max_requests=5, max_file_size_mb=5),
         ),
         "starter": PlanDefinition(
             key="starter",
@@ -69,12 +69,11 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             contact_only=False,
             internal=False,
             features=(
-                "3 API groups",
-                "500 document extraction calls",
+                "5 API groups",
+                "750 document extraction calls",
                 "5 MB max document size",
-                "Recharge anytime when credits end",
             ),
-            limits=PlanLimits(max_groups=3, max_requests=500, max_file_size_mb=5),
+            limits=PlanLimits(max_groups=5, max_requests=750, max_file_size_mb=5),
             dodo_product_id=settings.dodo_starter_product_id,
         ),
         "growth": PlanDefinition(
@@ -89,12 +88,12 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             contact_only=False,
             internal=False,
             features=(
-                "6 API groups",
-                "1,350 document extraction calls",
+                "10 API groups",
+                "2000 document extraction calls",
                 "10 MB max document size",
                 "Recharge anytime when credits end",
             ),
-            limits=PlanLimits(max_groups=6, max_requests=1_350, max_file_size_mb=10),
+            limits=PlanLimits(max_groups=10, max_requests=2_000, max_file_size_mb=10),
             dodo_product_id=settings.dodo_growth_product_id,
         ),
         "scale": PlanDefinition(
@@ -109,18 +108,17 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             contact_only=False,
             internal=False,
             features=(
-                "12 API groups",
-                "12,000 document extraction calls",
+                "20 API groups",
+                "10,000 document extraction calls",
                 "25 MB max document size",
-                "Recharge anytime when credits end",
             ),
-            limits=PlanLimits(max_groups=12, max_requests=12_000, max_file_size_mb=25),
+            limits=PlanLimits(max_groups=20, max_requests=10_000, max_file_size_mb=25),
             dodo_product_id=settings.dodo_scale_product_id,
         ),
         "contact": PlanDefinition(
             key="contact",
             name="Contact",
-            description="For higher volumes, compliance reviews, or custom rollout requirements.",
+            description="Custom",
             price_usd=None,
             interval_label=None,
             cta_label="Contact Sales",
@@ -129,10 +127,7 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             contact_only=True,
             internal=False,
             features=(
-                "Custom throughput",
-                "Custom onboarding",
-                "Custom support terms",
-                "Implementation planning",
+                "Custom rollout",
             ),
             limits=PlanLimits(max_groups=None, max_requests=None, max_file_size_mb=None),
         ),

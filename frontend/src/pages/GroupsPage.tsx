@@ -3,7 +3,7 @@ import { FileSearch, Plus, RefreshCcw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { getErrorMessage, groupsApi, usageApi } from '../api/client'
 import { GroupCard } from '../components/GroupCard'
-import { Button, ErrorMessage, Panel, StatusBadge } from '../components/ui'
+import { Button, ErrorMessage, Panel } from '../components/ui'
 import type { ApiGroup } from '../types'
 
 export function GroupsPage() {
@@ -34,7 +34,6 @@ export function GroupsPage() {
   }
 
   const groups = groupsQuery.data ?? []
-  const usageSummary = usageSummaryQuery.data
 
   return (
     <div className="grid gap-6">
