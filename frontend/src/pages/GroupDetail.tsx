@@ -157,6 +157,65 @@ export function GroupDetail() {
         </Link>
       </div>
 
+      <Panel title="API Info">
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <span className="text-sm font-medium text-slate-800">Endpoint</span>
+            <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <code className="truncate text-xs text-slate-700">{endpoint}</code>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => copyText('endpoint', endpoint)}
+              >
+                {copied === 'endpoint' ? (
+                  <Check size={14} aria-hidden="true" />
+                ) : (
+                  <Copy size={14} aria-hidden="true" />
+                )}
+                Copy
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <span className="text-sm font-medium text-slate-800">Auth Header</span>
+            <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <KeyRound size={16} className="text-slate-500" aria-hidden="true" />
+              <code className="min-w-0 flex-1 truncate text-xs text-slate-700">
+                X-API-Key: {visibleKey}
+              </code>
+              <Button size="sm" variant="secondary" onClick={() => setShowKey((value) => !value)}>
+                {showKey ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
+                {showKey ? 'Hide' : 'Reveal'}
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={!apiKey}
+                onClick={() => copyText('api-key', apiKey)}
+              >
+                {copied === 'api-key' ? (
+                  <Check size={14} aria-hidden="true" />
+                ) : (
+                  <Copy size={14} aria-hidden="true" />
+                )}
+                Copy
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                disabled={rotateKey.isPending}
+                onClick={() => rotateKey.mutate()}
+              >
+                <RotateCcw size={14} aria-hidden="true" />
+                {rotateKey.isPending ? 'Rotating...' : 'Rotate'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Panel>
+
       {rotateKey.isError ? <ErrorMessage>{getErrorMessage(rotateKey.error)}</ErrorMessage> : null}
       {usageSummaryQuery.isError ? (
         <ErrorMessage>{getErrorMessage(usageSummaryQuery.error)}</ErrorMessage>
@@ -206,106 +265,49 @@ export function GroupDetail() {
             <TestPanel groupId={group.id} />
           </Panel>
 
-          <Panel title="API Info">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <span className="text-sm font-medium text-slate-800">Endpoint</span>
-                <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <code className="truncate text-xs text-slate-700">{endpoint}</code>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => copyText('endpoint', endpoint)}
-                  >
-                    {copied === 'endpoint' ? (
-                      <Check size={14} aria-hidden="true" />
-                    ) : (
-                      <Copy size={14} aria-hidden="true" />
-                    )}
-                    Copy
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <span className="text-sm font-medium text-slate-800">Auth Header</span>
-                <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <KeyRound size={16} className="text-slate-500" aria-hidden="true" />
-                  <code className="min-w-0 flex-1 truncate text-xs text-slate-700">
-                    X-API-Key: {visibleKey}
-                  </code>
-                  <Button size="sm" variant="secondary" onClick={() => setShowKey((value) => !value)}>
-                    {showKey ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
-                    {showKey ? 'Hide' : 'Reveal'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={!apiKey}
-                    onClick={() => copyText('api-key', apiKey)}
-                  >
-                    {copied === 'api-key' ? (
-                      <Check size={14} aria-hidden="true" />
-                    ) : (
-                      <Copy size={14} aria-hidden="true" />
-                    )}
-                    Copy
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    disabled={rotateKey.isPending}
-                    onClick={() => rotateKey.mutate()}
-                  >
-                    <RotateCcw size={14} aria-hidden="true" />
-                    {rotateKey.isPending ? 'Rotating...' : 'Rotate'}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-800">
-                    <Code2 size={16} aria-hidden="true" />
-                    Code Snippet
-                  </span>
-                  <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-                    {snippetTabs.map((tab) => (
-                      <button
-                        key={tab}
-                        type="button"
-                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                          activeTab === tab
-                            ? 'bg-white text-slate-950 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-950'
-                        }`}
-                        onClick={() => setActiveTab(tab)}
-                      >
-                        {tab}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950">
-                  <div className="flex justify-end border-b border-slate-800 px-3 py-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="h-8 border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800"
-                      onClick={() => copyText('snippet', snippet)}
+          <Panel title="Code Snippet">
+            <div className="grid gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-slate-800">
+                  <Code2 size={16} aria-hidden="true" />
+                  Snippet
+                </span>
+                <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                  {snippetTabs.map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                        activeTab === tab
+                          ? 'bg-white text-slate-950 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-950'
+                      }`}
+                      onClick={() => setActiveTab(tab)}
                     >
-                      {copied === 'snippet' ? (
-                        <Check size={14} aria-hidden="true" />
-                      ) : (
-                        <Copy size={14} aria-hidden="true" />
-                      )}
-                      Copy
-                    </Button>
-                  </div>
-                  <pre className="app-scrollbar max-h-72 overflow-auto p-4 text-xs leading-5 text-emerald-100">
-                    <code>{snippet}</code>
-                  </pre>
+                      {tab}
+                    </button>
+                  ))}
                 </div>
+              </div>
+              <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950">
+                <div className="flex justify-end border-b border-slate-800 px-3 py-2">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800"
+                    onClick={() => copyText('snippet', snippet)}
+                  >
+                    {copied === 'snippet' ? (
+                      <Check size={14} aria-hidden="true" />
+                    ) : (
+                      <Copy size={14} aria-hidden="true" />
+                    )}
+                    Copy
+                  </Button>
+                </div>
+                <pre className="app-scrollbar max-h-72 overflow-auto p-4 text-xs leading-5 text-emerald-100">
+                  <code>{snippet}</code>
+                </pre>
               </div>
             </div>
           </Panel>

@@ -28,7 +28,7 @@ def get_usage_summary(
 ) -> UsageSummaryResponse:
     snapshot = get_usage_snapshot(db, current_user)
     group_limit = snapshot.plan.limits.max_groups
-    request_limit = snapshot.plan.limits.max_monthly_requests
+    request_limit = snapshot.plan.limits.max_requests
 
     groups_remaining = None if group_limit is None else max(group_limit - snapshot.groups_used, 0)
     requests_remaining = (
@@ -43,7 +43,7 @@ def get_usage_summary(
         requests_remaining=requests_remaining,
         limits=PlanLimitsResponse(
             max_groups=snapshot.plan.limits.max_groups,
-            max_monthly_requests=snapshot.plan.limits.max_monthly_requests,
+            max_requests=snapshot.plan.limits.max_requests,
             max_file_size_mb=snapshot.plan.limits.max_file_size_mb,
         ),
         window=UsageWindowResponse(

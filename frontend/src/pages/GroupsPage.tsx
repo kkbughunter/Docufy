@@ -61,24 +61,7 @@ export function GroupsPage() {
         </div>
       </div>
 
-      {usageSummary ? (
-        <Panel>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-sm font-medium text-slate-900">
-                {usageSummary.groups_used} groups in use
-              </div>
-              <div className="mt-1 text-sm text-slate-500">
-                {usageSummary.limits.max_groups != null
-                  ? `${usageSummary.groups_remaining ?? 0} group slots remain on your plan.`
-                  : 'Your current plan does not cap the number of groups.'}
-              </div>
-            </div>
-            <StatusBadge tone="neutral">{usageSummary.plan_key}</StatusBadge>
-          </div>
-        </Panel>
-      ) : null}
-
+     
       {groupsQuery.isError ? <ErrorMessage>{getErrorMessage(groupsQuery.error)}</ErrorMessage> : null}
       {usageSummaryQuery.isError ? (
         <ErrorMessage>{getErrorMessage(usageSummaryQuery.error)}</ErrorMessage>

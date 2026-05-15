@@ -33,12 +33,8 @@ export function BillingPage() {
         <div>
           <p className="text-sm font-medium text-slate-500">Billing</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-            USD plans powered by Dodo Payments
+            USD recharge plans
           </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            Pick a plan, jump into Dodo hosted checkout, and use the customer portal later for
-            subscription changes and invoices.
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {summary?.dodo_customer_id ? (
@@ -67,7 +63,7 @@ export function BillingPage() {
       {startCheckout.isError ? <ErrorMessage>{getErrorMessage(startCheckout.error)}</ErrorMessage> : null}
       {startPortal.isError ? <ErrorMessage>{getErrorMessage(startPortal.error)}</ErrorMessage> : null}
 
-      <Panel title="Current Subscription" description="The plan currently applied inside Docufy.">
+      <Panel title="Current Plan" description="">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -93,9 +89,19 @@ export function BillingPage() {
               </span>
             </div>
             <div>
-              Billing Period End:{' '}
+              Last Successful Purchase:{' '}
               <span className="font-medium text-slate-950">
-                {summary?.billing_period_end ? formatDate(summary.billing_period_end) : 'Not set'}
+                {summary?.last_successful_purchase_at
+                  ? formatDate(summary.last_successful_purchase_at)
+                  : 'Not available'}
+              </span>
+            </div>
+            <div>
+              Last Failed Attempt:{' '}
+              <span className="font-medium text-slate-950">
+                {summary?.last_failed_purchase_at
+                  ? formatDate(summary.last_failed_purchase_at)
+                  : 'None'}
               </span>
             </div>
           </div>
@@ -126,7 +132,7 @@ export function BillingPage() {
                   {formatPlanPrice(plan.price_usd, plan.interval_label)}
                 </div>
                 <div className="mt-1 text-sm text-slate-500">
-                  {plan.contact_only ? 'Custom rollout' : 'Billed in USD'}
+                  {plan.contact_only ? 'Custom rollout' : 'One-time recharge in USD'}
                 </div>
               </div>
 
@@ -163,6 +169,44 @@ export function BillingPage() {
           )
         })}
       </section>
+
+      <Panel title="Recent Billing Events" description="Latest purchase and payment updates from Dodo webhooks.">
+        {(summary?.recent_events ?? []).length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-200 px-4 py-10 text-sm text-slate-500">
+            No billing events yet.
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {(summary?.recent_events ?? []).map((event) => (
+              <div
+                key={`${event.event_type}-${event.created_at}-${event.payment_id ?? event.subscription_id ?? 'evt'}`}
+                className="flex flex-col gap-2 rounded-lg border border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <div className="text-sm font-medium text-slate-950">
+                    {event.plan_name ?? event.plan_key ?? 'Plan'} · {event.event_type}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {formatDate(event.created_at)}
+                    {event.failure_reason ? ` · ${event.failure_reason}` : ''}
+                  </div>
+                </div>
+                <StatusBadge
+                  tone={
+                    event.status === 'active'
+                      ? 'success'
+                      : event.status.includes('failed')
+                        ? 'danger'
+                        : 'warning'
+                  }
+                >
+                  {event.status}
+                </StatusBadge>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
     </div>
   )
 }

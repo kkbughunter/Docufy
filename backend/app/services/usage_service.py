@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 
 from fastapi import HTTPException, status
-from sqlalchemy import Integer, and_, case, func, select
+from sqlalchemy import Integer, case, func, select
 from sqlalchemy.orm import Session
 
 from app.models.analytics import ApiRequestLog
@@ -16,7 +16,7 @@ from app.services.plan_service import PlanDefinition, PlanLimits, get_effective_
 @dataclass(frozen=True)
 class UsageWindow:
     started_at: datetime
-    ends_at: datetime
+    ends_at: datetime | None
 
 
 @dataclass(frozen=True)
@@ -33,17 +33,8 @@ class UsageSnapshot:
 
 
 def get_usage_window(user: User, now: datetime | None = None) -> UsageWindow:
-    current_time = now or datetime.now(UTC)
-
-    if user.billing_period_start and user.billing_period_end and user.billing_period_start < user.billing_period_end:
-        return UsageWindow(started_at=user.billing_period_start, ends_at=user.billing_period_end)
-
-    month_start = current_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    if month_start.month == 12:
-        next_month = month_start.replace(year=month_start.year + 1, month=1)
-    else:
-        next_month = month_start.replace(month=month_start.month + 1)
-    return UsageWindow(started_at=month_start, ends_at=next_month)
+    del now
+    return UsageWindow(started_at=user.billing_period_start or user.created_at, ends_at=None)
 
 
 def count_groups(db: Session, user: User) -> int:
@@ -77,13 +68,7 @@ def get_usage_snapshot(db: Session, user: User, now: datetime | None = None) -> 
                 0,
             ),
             func.coalesce(func.avg(ApiRequestLog.duration_ms.cast(Integer)), 0),
-        ).where(
-            and_(
-                ApiRequestLog.user_id == user.id,
-                ApiRequestLog.created_at >= window.started_at,
-                ApiRequestLog.created_at < window.ends_at,
-            )
-        )
+        ).where(ApiRequestLog.user_id == user.id, ApiRequestLog.created_at >= window.started_at)
     ).one()
 
     total_calls, requests_used, success_calls, failed_calls, blocked_calls, average_duration = (
@@ -119,14 +104,14 @@ def ensure_group_limit(db: Session, user: User) -> None:
 
 def ensure_request_limit(db: Session, user: User) -> UsageSnapshot:
     snapshot = get_usage_snapshot(db, user)
-    limit = snapshot.plan.limits.max_monthly_requests
+    limit = snapshot.plan.limits.max_requests
 
     if limit is not None and snapshot.requests_used >= limit:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=(
-                f'{snapshot.plan.name} includes {limit} extraction calls for the current billing period. '
-                "Upgrade your plan to continue processing documents."
+                f'{snapshot.plan.name} includes {limit} document extraction calls per recharge. '
+                "Recharge your plan to continue processing documents."
             ),
         )
 

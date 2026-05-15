@@ -7,6 +7,7 @@ from app.database import get_db
 from app.middleware.auth_middleware import get_current_user
 from app.models.user import User
 from app.schemas.billing import (
+    BillingEventResponse,
     BillingSummaryResponse,
     CheckoutSessionRequest,
     CheckoutSessionResponse,
@@ -17,7 +18,8 @@ from app.schemas.billing import (
 from app.services.billing_service import (
     create_checkout_session,
     create_customer_portal_session,
-    sync_subscription_event,
+    list_recent_billing_events,
+    sync_billing_event,
     verify_webhook_signature,
 )
 from app.services.plan_service import PlanDefinition, get_effective_plan, get_public_plans
@@ -40,7 +42,7 @@ def _to_plan_response(plan: PlanDefinition) -> PlanResponse:
         features=list(plan.features),
         limits=PlanLimitsResponse(
             max_groups=plan.limits.max_groups,
-            max_monthly_requests=plan.limits.max_monthly_requests,
+            max_requests=plan.limits.max_requests,
             max_file_size_mb=plan.limits.max_file_size_mb,
         ),
     )
@@ -54,9 +56,24 @@ def list_public_plans() -> list[PlanResponse]:
 @router.get("/summary", response_model=BillingSummaryResponse)
 def get_billing_summary(
     current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> BillingSummaryResponse:
     current_plan = get_effective_plan(current_user)
     public_plans = [_to_plan_response(plan) for plan in get_public_plans()]
+    recent_events = list_recent_billing_events(db, current_user, limit=12)
+    last_successful_purchase_at = next(
+        (event.created_at for event in recent_events if event.status == "active"),
+        None,
+    )
+    last_failed_purchase_at = next(
+        (
+            event.created_at
+            for event in recent_events
+            if event.status in {"failed", "payment_failed", "payment_cancelled"}
+        ),
+        None,
+    )
+
     return BillingSummaryResponse(
         plan_key=current_plan.key,
         billing_status=current_user.billing_status,
@@ -64,8 +81,24 @@ def get_billing_summary(
         dodo_subscription_id=current_user.dodo_subscription_id,
         billing_period_start=current_user.billing_period_start,
         billing_period_end=current_user.billing_period_end,
+        last_successful_purchase_at=last_successful_purchase_at,
+        last_failed_purchase_at=last_failed_purchase_at,
         current_plan=_to_plan_response(current_plan),
         public_plans=public_plans,
+        recent_events=[
+            BillingEventResponse(
+                event_type=event.event_type,
+                status=event.status,
+                plan_key=event.plan_key,
+                plan_name=event.plan_name,
+                product_id=event.product_id,
+                payment_id=event.payment_id,
+                subscription_id=event.subscription_id,
+                failure_reason=event.failure_reason,
+                created_at=event.created_at,
+            )
+            for event in recent_events
+        ],
     )
 
 
@@ -103,7 +136,7 @@ async def dodo_webhook(
             "webhook-timestamp": webhook_timestamp or "",
         },
     )
-    sync_subscription_event(
+    sync_billing_event(
         db,
         webhook_id=str(webhook_id or ""),
         event_type=str(payload.get("type") or "unknown"),

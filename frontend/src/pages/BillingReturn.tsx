@@ -35,11 +35,11 @@ export function BillingReturn() {
               <div className="text-lg font-semibold text-slate-950">
                 {status === 'cancelled'
                   ? 'Checkout was cancelled'
-                  : 'We are syncing your subscription'}
+                  : 'We are syncing your recharge'}
               </div>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                 Redirect params are only a user-facing signal. Docufy waits for the Dodo webhook to
-                update plan access, so refresh billing in a moment if the new plan has not appeared
+                update plan access, so refresh billing in a moment if the recharge has not appeared
                 yet.
               </p>
             </div>

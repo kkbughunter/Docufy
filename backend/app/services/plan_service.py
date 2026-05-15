@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 
 from app.config import settings
 from app.models.user import User
@@ -10,7 +10,7 @@ from app.models.user import User
 @dataclass(frozen=True)
 class PlanLimits:
     max_groups: int | None
-    max_monthly_requests: int | None
+    max_requests: int | None
     max_file_size_mb: int | None
 
 
@@ -42,9 +42,9 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
         "trial": PlanDefinition(
             key="trial",
             name="Trial",
-            description="Starter sandbox for evaluating Docufy before you move onto a paid plan.",
+            description="Free trial for testing extraction before you recharge.",
             price_usd=0,
-            interval_label="forever",
+            interval_label=None,
             cta_label="Current Trial",
             cta_href=None,
             highlighted=False,
@@ -52,69 +52,69 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
             internal=True,
             features=(
                 "1 API group",
-                "25 extraction calls per month",
+                "3 document extraction calls",
                 "5 MB max document size",
             ),
-            limits=PlanLimits(max_groups=1, max_monthly_requests=25, max_file_size_mb=5),
+            limits=PlanLimits(max_groups=1, max_requests=3, max_file_size_mb=5),
         ),
         "starter": PlanDefinition(
             key="starter",
             name="Starter",
-            description="For small teams shipping production document APIs in USD billing.",
-            price_usd=29,
-            interval_label="month",
-            cta_label="Start Starter",
+            description="Recharge pack for smaller production workflows.",
+            price_usd=20,
+            interval_label=None,
+            cta_label="Buy Starter",
             cta_href=None,
             highlighted=False,
             contact_only=False,
             internal=False,
             features=(
                 "3 API groups",
-                "500 extraction calls per month",
-                "10 MB max document size",
-                "Hosted checkout with Dodo Payments",
+                "500 document extraction calls",
+                "5 MB max document size",
+                "Recharge anytime when credits end",
             ),
-            limits=PlanLimits(max_groups=3, max_monthly_requests=500, max_file_size_mb=10),
+            limits=PlanLimits(max_groups=3, max_requests=500, max_file_size_mb=5),
             dodo_product_id=settings.dodo_starter_product_id,
         ),
         "growth": PlanDefinition(
             key="growth",
             name="Growth",
-            description="For operators juggling multiple document families and steady API volume.",
-            price_usd=79,
-            interval_label="month",
-            cta_label="Start Growth",
+            description="Recharge pack for growing API usage.",
+            price_usd=49,
+            interval_label=None,
+            cta_label="Buy Growth",
             cta_href=None,
             highlighted=True,
             contact_only=False,
             internal=False,
             features=(
-                "10 API groups",
-                "2,500 extraction calls per month",
-                "20 MB max document size",
-                "Priority billing support",
+                "6 API groups",
+                "1,350 document extraction calls",
+                "10 MB max document size",
+                "Recharge anytime when credits end",
             ),
-            limits=PlanLimits(max_groups=10, max_monthly_requests=2_500, max_file_size_mb=20),
+            limits=PlanLimits(max_groups=6, max_requests=1_350, max_file_size_mb=10),
             dodo_product_id=settings.dodo_growth_product_id,
         ),
         "scale": PlanDefinition(
             key="scale",
             name="Scale",
-            description="For production-heavy teams that want room for larger intake pipelines.",
+            description="Recharge pack for high-volume extraction.",
             price_usd=199,
-            interval_label="month",
-            cta_label="Start Scale",
+            interval_label=None,
+            cta_label="Buy Scale",
             cta_href=None,
             highlighted=False,
             contact_only=False,
             internal=False,
             features=(
-                "30 API groups",
-                "10,000 extraction calls per month",
+                "12 API groups",
+                "12,000 document extraction calls",
                 "25 MB max document size",
-                "Customer portal access",
+                "Recharge anytime when credits end",
             ),
-            limits=PlanLimits(max_groups=30, max_monthly_requests=10_000, max_file_size_mb=25),
+            limits=PlanLimits(max_groups=12, max_requests=12_000, max_file_size_mb=25),
             dodo_product_id=settings.dodo_scale_product_id,
         ),
         "contact": PlanDefinition(
@@ -134,7 +134,7 @@ def get_plan_catalog() -> dict[str, PlanDefinition]:
                 "Custom support terms",
                 "Implementation planning",
             ),
-            limits=PlanLimits(max_groups=None, max_monthly_requests=None, max_file_size_mb=None),
+            limits=PlanLimits(max_groups=None, max_requests=None, max_file_size_mb=None),
         ),
     }
 
@@ -162,14 +162,5 @@ def resolve_plan_from_product_id(product_id: str | None) -> PlanDefinition | Non
 
 
 def get_effective_plan(user: User, now: datetime | None = None) -> PlanDefinition:
-    current_time = now or datetime.now(UTC)
-    current_plan = get_plan(user.plan_key)
-
-    if current_plan.key == "trial":
-        return current_plan
-
-    if user.billing_period_end and user.billing_period_end <= current_time:
-        if user.billing_status in {"cancelled", "expired", "failed"}:
-            return get_plan("trial")
-
-    return current_plan
+    del now
+    return get_plan(user.plan_key)

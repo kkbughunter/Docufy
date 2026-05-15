@@ -41,33 +41,6 @@ export function Dashboard() {
 
   return (
     <div className="grid gap-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">Overview</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-            Keep your extraction APIs moving
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            Track plan capacity, request health, and group activity from one place while the
-            workspace handles token refresh in the background.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/groups"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-medium text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
-          >
-            View Groups
-          </Link>
-          <Link
-            to="/billing"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-950 bg-slate-950 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
-            Manage Billing
-          </Link>
-        </div>
-      </div>
-
       {groupsQuery.isError ? <ErrorMessage>{getErrorMessage(groupsQuery.error)}</ErrorMessage> : null}
       {usageSummaryQuery.isError ? (
         <ErrorMessage>{getErrorMessage(usageSummaryQuery.error)}</ErrorMessage>
@@ -91,9 +64,9 @@ export function Dashboard() {
               <div className="mt-1 text-sm text-slate-500">
                 {billingSummary
                   ? formatPlanPrice(
-                      billingSummary.current_plan.price_usd,
-                      billingSummary.current_plan.interval_label,
-                    )
+                    billingSummary.current_plan.price_usd,
+                    billingSummary.current_plan.interval_label,
+                  )
                   : 'Loading...'}
               </div>
             </div>
@@ -113,8 +86,8 @@ export function Dashboard() {
               {usageSummary ? formatNumber(usageSummary.totals.requests_used) : '...'}
             </div>
             <div className="text-sm text-slate-500">
-              {usageSummary?.limits.max_monthly_requests != null
-                ? `${formatNumber(usageSummary.requests_remaining ?? 0)} remaining this period`
+              {usageSummary?.limits.max_requests != null
+                ? `${formatNumber(usageSummary.requests_remaining ?? 0)} credits remaining`
                 : 'Unlimited on current plan'}
             </div>
           </div>
@@ -198,21 +171,20 @@ export function Dashboard() {
           )}
         </Panel>
 
-        <Panel
-          title="This Billing Window"
-          description="The active window that Docufy uses for strict request enforcement."
-        >
+        <Panel title="Current Cycle" description="The active cycle used for strict request enforcement.">
           <dl className="grid gap-4 text-sm">
             <div>
-              <dt className="text-slate-500">Window Start</dt>
+              <dt className="text-slate-500">Cycle Start</dt>
               <dd className="mt-1 font-medium text-slate-950">
                 {usageSummary ? formatDate(usageSummary.window.started_at) : 'Loading...'}
               </dd>
             </div>
             <div>
-              <dt className="text-slate-500">Window End</dt>
+              <dt className="text-slate-500">Cycle End</dt>
               <dd className="mt-1 font-medium text-slate-950">
-                {usageSummary ? formatDate(usageSummary.window.ends_at) : 'Loading...'}
+                {usageSummary?.window.ends_at
+                  ? formatDate(usageSummary.window.ends_at)
+                  : 'On next recharge'}
               </dd>
             </div>
             <div>
@@ -220,8 +192,8 @@ export function Dashboard() {
               <dd className="mt-1 font-medium text-slate-950">
                 {usageSummary
                   ? formatNumber(
-                      usageSummary.totals.failed_calls + usageSummary.totals.blocked_calls,
-                    )
+                    usageSummary.totals.failed_calls + usageSummary.totals.blocked_calls,
+                  )
                   : 'Loading...'}
               </dd>
             </div>
@@ -231,7 +203,6 @@ export function Dashboard() {
 
       <Panel
         title="Recent Groups"
-        description="Jump back into the APIs you’ve been shaping most recently."
         action={
           <Link
             to="/groups"

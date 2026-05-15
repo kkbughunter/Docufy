@@ -8,7 +8,7 @@ from app.schemas.billing import PlanLimitsResponse
 
 class UsageWindowResponse(BaseModel):
     started_at: datetime
-    ends_at: datetime
+    ends_at: datetime | None = None
 
 
 class UsageTotalsResponse(BaseModel):

@@ -71,7 +71,11 @@ export function formatPlanPrice(priceUsd?: number | null, intervalLabel?: string
     return 'Custom'
   }
 
-  return `$${priceUsd}/${intervalLabel ?? 'mo'}`
+  if (!intervalLabel) {
+    return `$${priceUsd}`
+  }
+
+  return `$${priceUsd}/${intervalLabel}`
 }
 
 export function maskApiKey(apiKey?: string | null) {

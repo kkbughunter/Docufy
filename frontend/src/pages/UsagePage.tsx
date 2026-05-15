@@ -53,11 +53,11 @@ export function UsagePage() {
       <div>
         <p className="text-sm font-medium text-slate-500">Usage</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-          Strict plan enforcement
+          Recharge usage tracking
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          Request and group limits are checked before Docufy calls Claude, so this screen matches
-          the real guardrails your production traffic is hitting.
+          Request and group limits are checked before Docufy calls Claude. Limits stay in effect
+          until you recharge.
         </p>
       </div>
 
@@ -130,14 +130,14 @@ export function UsagePage() {
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <Panel
           title="Capacity"
-          description="How much of the current billing window has been consumed."
+          description="How much of your current recharge capacity has been consumed."
         >
           {usage ? (
             <div className="grid gap-5">
               <UsageBar
                 label="Extraction Requests"
                 used={usage.totals.requests_used}
-                limit={usage.limits.max_monthly_requests}
+                limit={usage.limits.max_requests}
               />
               <UsageBar
                 label="API Groups"
@@ -150,18 +150,18 @@ export function UsagePage() {
           )}
         </Panel>
 
-        <Panel title="Current Window" description="The billing window used for limit checks.">
+        <Panel title="Recharge Cycle" description="Current usage cycle used for limit checks.">
           <dl className="grid gap-4 text-sm">
             <div>
-              <dt className="text-slate-500">Starts</dt>
+              <dt className="text-slate-500">Cycle Start</dt>
               <dd className="mt-1 font-medium text-slate-950">
                 {usage ? formatDate(usage.window.started_at) : 'Loading...'}
               </dd>
             </div>
             <div>
-              <dt className="text-slate-500">Ends</dt>
+              <dt className="text-slate-500">Cycle End</dt>
               <dd className="mt-1 font-medium text-slate-950">
-                {usage ? formatDate(usage.window.ends_at) : 'Loading...'}
+                {usage?.window.ends_at ? formatDate(usage.window.ends_at) : 'On next recharge'}
               </dd>
             </div>
             <div>

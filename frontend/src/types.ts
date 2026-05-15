@@ -21,7 +21,7 @@ export type UserProfile = {
 
 export type PlanLimits = {
   max_groups?: number | null
-  max_monthly_requests?: number | null
+  max_requests?: number | null
   max_file_size_mb?: number | null
 }
 
@@ -47,13 +47,28 @@ export type BillingSummary = {
   dodo_subscription_id?: string | null
   billing_period_start?: string | null
   billing_period_end?: string | null
+  last_successful_purchase_at?: string | null
+  last_failed_purchase_at?: string | null
   current_plan: BillingPlan
   public_plans: BillingPlan[]
+  recent_events: BillingEvent[]
+}
+
+export type BillingEvent = {
+  event_type: string
+  status: string
+  plan_key?: string | null
+  plan_name?: string | null
+  product_id?: string | null
+  payment_id?: string | null
+  subscription_id?: string | null
+  failure_reason?: string | null
+  created_at: string
 }
 
 export type UsageWindow = {
   started_at: string
-  ends_at: string
+  ends_at?: string | null
 }
 
 export type UsageTotals = {

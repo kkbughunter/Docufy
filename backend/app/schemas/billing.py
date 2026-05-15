@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class PlanLimitsResponse(BaseModel):
     max_groups: int | None = None
-    max_monthly_requests: int | None = None
+    max_requests: int | None = None
     max_file_size_mb: int | None = None
 
 
@@ -24,6 +24,18 @@ class PlanResponse(BaseModel):
     limits: PlanLimitsResponse
 
 
+class BillingEventResponse(BaseModel):
+    event_type: str
+    status: str
+    plan_key: str | None = None
+    plan_name: str | None = None
+    product_id: str | None = None
+    payment_id: str | None = None
+    subscription_id: str | None = None
+    failure_reason: str | None = None
+    created_at: datetime
+
+
 class BillingSummaryResponse(BaseModel):
     plan_key: str
     billing_status: str
@@ -31,8 +43,11 @@ class BillingSummaryResponse(BaseModel):
     dodo_subscription_id: str | None = None
     billing_period_start: datetime | None = None
     billing_period_end: datetime | None = None
+    last_successful_purchase_at: datetime | None = None
+    last_failed_purchase_at: datetime | None = None
     current_plan: PlanResponse
     public_plans: list[PlanResponse]
+    recent_events: list[BillingEventResponse] = Field(default_factory=list)
 
 
 class CheckoutSessionRequest(BaseModel):
