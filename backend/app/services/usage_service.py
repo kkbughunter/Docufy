@@ -11,6 +11,7 @@ from app.models.analytics import ApiRequestLog
 from app.models.group import ApiGroup
 from app.models.user import User
 from app.services.plan_service import PlanDefinition, PlanLimits, get_effective_plan
+from app.services.subscription_service import get_or_create_user_subscription
 
 
 @dataclass(frozen=True)
@@ -105,13 +106,14 @@ def ensure_group_limit(db: Session, user: User) -> None:
 
 def ensure_request_limit(db: Session, user: User) -> UsageSnapshot:
     snapshot = get_usage_snapshot(db, user)
-    limit = snapshot.plan.limits.max_requests
+    subscription = get_or_create_user_subscription(db, user)
+    balance = max(subscription.request_credits_balance, 0)
 
-    if limit is not None and snapshot.requests_used >= limit:
+    if snapshot.plan.limits.max_requests is not None and balance <= 0:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=(
-                f'{snapshot.plan.name} includes {limit} document extraction calls per recharge. '
+                f'{snapshot.plan.name} has no remaining document extraction credits. '
                 "Recharge your plan to continue processing documents."
             ),
         )

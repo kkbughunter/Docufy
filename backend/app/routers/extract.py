@@ -20,6 +20,7 @@ from app.services.claude_service import (
     claude_service,
 )
 from app.services.document_service import process_upload
+from app.services.subscription_service import get_or_create_user_subscription
 from app.services.usage_service import ensure_request_limit, get_file_size_limit_bytes
 
 router = APIRouter(prefix="/extract", tags=["extract"])
@@ -118,6 +119,10 @@ async def extract_document(
         )
         file_size_bytes = document.size_bytes
         used_ai_call = True
+        subscription = get_or_create_user_subscription(db, current_user)
+        if usage_snapshot.plan.limits.max_requests is not None:
+            subscription.request_credits_balance = max(subscription.request_credits_balance - 1, 0)
+            db.commit()
         extracted_data = await claude_service.extract_json(group, document)
         request_status = "success"
         status_code = status.HTTP_200_OK

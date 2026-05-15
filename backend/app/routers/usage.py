@@ -33,9 +33,7 @@ def get_usage_summary(
     request_limit = snapshot.plan.limits.max_requests
 
     groups_remaining = None if group_limit is None else max(group_limit - snapshot.groups_used, 0)
-    requests_remaining = (
-        None if request_limit is None else max(request_limit - snapshot.requests_used, 0)
-    )
+    requests_remaining = None if request_limit is None else max(subscription.request_credits_balance, 0)
 
     return UsageSummaryResponse(
         plan_key=snapshot.plan.key,

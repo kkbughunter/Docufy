@@ -324,6 +324,8 @@ def sync_billing_event(
                 subscription.plan_key = plan.key
                 subscription.billing_period_start = event_time
                 subscription.billing_period_end = None
+                if plan.limits.max_requests is not None:
+                    subscription.request_credits_balance = max(subscription.request_credits_balance, 0) + plan.limits.max_requests
 
             if event_type == "subscription.plan_changed" and plan is not None and plan.key != "contact":
                 subscription.plan_key = plan.key
