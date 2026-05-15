@@ -11,4 +11,18 @@ export const documentTypes: DocumentType[] = [
   'Custom',
 ]
 
-export const languageHints: LanguageHint[] = ['English', 'Tamil', 'Hindi', 'Mixed', 'Other']
+export const languageHints: LanguageHint[] = [
+  'English',
+  'Spanish',
+  'French',
+  'German',
+  'Portuguese',
+  'Arabic',
+  'Chinese',
+  'Japanese',
+  'Korean',
+  'Hindi',
+  'Tamil',
+  'Mixed',
+  'Other',
+]

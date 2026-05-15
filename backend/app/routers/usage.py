@@ -11,13 +11,14 @@ from app.models.analytics import ApiRequestLog
 from app.models.user import User
 from app.schemas.billing import PlanLimitsResponse
 from app.schemas.usage import (
+    UsageDailyCostPointResponse,
     UsageHistoryItemResponse,
     UsageSummaryResponse,
     UsageTotalsResponse,
     UsageWindowResponse,
 )
 from app.services.subscription_service import get_or_create_user_subscription
-from app.services.usage_service import get_usage_snapshot
+from app.services.usage_service import get_daily_usage_cost_last_30_days, get_usage_snapshot
 
 router = APIRouter(prefix="/usage", tags=["usage"])
 
@@ -34,6 +35,7 @@ def get_usage_summary(
 
     groups_remaining = None if group_limit is None else max(group_limit - snapshot.groups_used, 0)
     requests_remaining = None if request_limit is None else max(subscription.request_credits_balance, 0)
+    daily_cost = get_daily_usage_cost_last_30_days(db, current_user, snapshot)
 
     return UsageSummaryResponse(
         plan_key=snapshot.plan.key,
@@ -58,6 +60,14 @@ def get_usage_summary(
             blocked_calls=snapshot.blocked_calls,
             average_duration_ms=snapshot.average_duration_ms,
         ),
+        daily_usage_cost=[
+            UsageDailyCostPointResponse(
+                date=point.date,
+                cost_usd=point.cost_usd,
+                requests_used=point.requests_used,
+            )
+            for point in daily_cost
+        ],
     )
 
 

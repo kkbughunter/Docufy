@@ -51,10 +51,12 @@ export function DocTypeSelector({ value, onChange }: DocTypeSelectorProps) {
       <Field label="Document Description">
         <Textarea
           rows={5}
+          maxLength={100}
           value={value.document_hint}
           onChange={(event) => onChange({ ...value, document_hint: event.target.value })}
           placeholder="Describe what this document looks like and what fields it usually contains."
         />
+        <p className="mt-1 text-xs text-slate-500">{value.document_hint.length}/100</p>
       </Field>
     </div>
   )

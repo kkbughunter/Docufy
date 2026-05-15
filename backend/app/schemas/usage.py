@@ -20,6 +20,12 @@ class UsageTotalsResponse(BaseModel):
     average_duration_ms: int
 
 
+class UsageDailyCostPointResponse(BaseModel):
+    date: datetime
+    cost_usd: float
+    requests_used: int
+
+
 class UsageSummaryResponse(BaseModel):
     plan_key: str
     billing_status: str
@@ -29,6 +35,7 @@ class UsageSummaryResponse(BaseModel):
     limits: PlanLimitsResponse
     window: UsageWindowResponse
     totals: UsageTotalsResponse
+    daily_usage_cost: list[UsageDailyCostPointResponse]
 
 
 class UsageHistoryItemResponse(BaseModel):

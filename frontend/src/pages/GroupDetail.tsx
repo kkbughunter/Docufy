@@ -210,7 +210,7 @@ export function GroupDetail() {
             </div>
             {issuedApiKey ? (
               <div className="grid gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
-                <div className="text-xs font-medium text-amber-900">{issuedApiKeyNotice}</div>
+                {/* <div className="text-x font-medium text-amber-900">{issuedApiKeyNotice}</div> */}
                 <div className="flex min-w-0 items-center gap-2">
                   <code className="min-w-0 flex-1 truncate rounded-md border border-amber-300 bg-white px-2 py-1 text-xs text-slate-700">
                     {issuedApiKey}

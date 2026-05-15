@@ -7,9 +7,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class GroupBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=100)
     document_type: str = Field(min_length=1, max_length=100)
-    document_hint: str | None = None
+    document_hint: str | None = Field(default=None, max_length=100)
     language_hint: str = Field(min_length=1, max_length=50)
     output_schema: dict[str, Any]
 

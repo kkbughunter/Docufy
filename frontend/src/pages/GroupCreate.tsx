@@ -8,7 +8,7 @@ import { DocTypeSelector } from '../components/DocTypeSelector'
 import { SchemaEditor } from '../components/SchemaEditor'
 import { Button, ErrorMessage, Field, Input, Panel, Textarea } from '../components/ui'
 import { documentTypes, languageHints } from '../lib/options'
-import { defaultSchemaText } from '../lib/schemaTemplates'
+import { defaultSchemaText, schemaTemplateForDocumentType } from '../lib/schemaTemplates'
 import { parseSchema } from '../lib/schemaValidation'
 import type { ApiGroup, DocumentType, GroupPayload, LanguageHint } from '../types'
 
@@ -192,12 +192,14 @@ function GroupForm({
           <Field label="Description">
             <Textarea
               rows={3}
+              maxLength={100}
               value={form.description}
               onChange={(event) =>
                 setForm((current) => ({ ...current, description: event.target.value }))
               }
               placeholder="Internal API for extracting candidate data from resumes."
             />
+            <p className="mt-1 text-xs text-slate-500">{form.description.length}/100</p>
           </Field>
         </div>
       </Panel>
@@ -212,7 +214,16 @@ function GroupForm({
             document_hint: form.document_hint,
             language_hint: form.language_hint,
           }}
-          onChange={(value) => setForm((current) => ({ ...current, ...value }))}
+          onChange={(value) =>
+            setForm((current) => ({
+              ...current,
+              ...value,
+              schemaText:
+                value.document_type !== current.document_type
+                  ? JSON.stringify(schemaTemplateForDocumentType(value.document_type), null, 2)
+                  : current.schemaText,
+            }))
+          }
         />
       </Panel>
 

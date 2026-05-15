@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import Integer, case, func, select
@@ -31,6 +31,13 @@ class UsageSnapshot:
     failed_calls: int
     blocked_calls: int
     average_duration_ms: int
+
+
+@dataclass(frozen=True)
+class DailyUsageCostPoint:
+    date: datetime
+    cost_usd: float
+    requests_used: int
 
 
 def get_usage_window(user: User, now: datetime | None = None) -> UsageWindow:
@@ -125,3 +132,51 @@ def get_file_size_limit_bytes(plan_limits: PlanLimits) -> int | None:
     if plan_limits.max_file_size_mb is None:
         return None
     return plan_limits.max_file_size_mb * 1024 * 1024
+
+
+def get_daily_usage_cost_last_30_days(
+    db: Session,
+    user: User,
+    snapshot: UsageSnapshot,
+    now: datetime | None = None,
+) -> list[DailyUsageCostPoint]:
+    current_time = now or datetime.now(UTC)
+    start_day = (current_time - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0)
+    day_end = current_time.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+
+    day_expr = func.date_trunc("day", ApiRequestLog.created_at)
+
+    rows = db.execute(
+        select(
+            day_expr.label("day"),
+            func.coalesce(
+                func.sum(case((ApiRequestLog.used_ai_call.is_(True), 1), else_=0)),
+                0,
+            ).label("requests_used"),
+        ).where(
+            ApiRequestLog.user_id == user.id,
+            ApiRequestLog.created_at >= start_day,
+            ApiRequestLog.created_at < day_end,
+        ).group_by(day_expr)
+    ).all()
+
+    used_by_day: dict[datetime, int] = {
+        row.day: int(row.requests_used or 0) for row in rows if row.day is not None
+    }
+    unit_cost = 0.0
+    if snapshot.plan.price_usd is not None and snapshot.plan.limits.max_requests:
+        unit_cost = snapshot.plan.price_usd / snapshot.plan.limits.max_requests
+
+    points: list[DailyUsageCostPoint] = []
+    for offset in range(30):
+        day = start_day + timedelta(days=offset)
+        requests_used = used_by_day.get(day, 0)
+        points.append(
+            DailyUsageCostPoint(
+                date=day,
+                cost_usd=round(requests_used * unit_cost, 4),
+                requests_used=requests_used,
+            )
+        )
+
+    return points

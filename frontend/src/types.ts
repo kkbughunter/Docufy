@@ -11,7 +11,20 @@ export type DocumentType =
   | 'Bank Statement'
   | 'Custom'
 
-export type LanguageHint = 'English' | 'Tamil' | 'Hindi' | 'Mixed' | 'Other'
+export type LanguageHint =
+  | 'English'
+  | 'Spanish'
+  | 'French'
+  | 'German'
+  | 'Portuguese'
+  | 'Arabic'
+  | 'Chinese'
+  | 'Japanese'
+  | 'Korean'
+  | 'Hindi'
+  | 'Tamil'
+  | 'Mixed'
+  | 'Other'
 
 export type UserProfile = {
   email: string
@@ -80,6 +93,12 @@ export type UsageTotals = {
   average_duration_ms: number
 }
 
+export type UsageDailyCostPoint = {
+  date: string
+  cost_usd: number
+  requests_used: number
+}
+
 export type UsageSummary = {
   plan_key: string
   billing_status: string
@@ -89,6 +108,7 @@ export type UsageSummary = {
   limits: PlanLimits
   window: UsageWindow
   totals: UsageTotals
+  daily_usage_cost: UsageDailyCostPoint[]
 }
 
 export type UsageHistoryItem = {

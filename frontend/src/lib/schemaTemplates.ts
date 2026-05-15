@@ -67,6 +67,43 @@ export const schemaTemplates = {
     total: 'number',
     payment_method: 'string',
   },
+  Contract: {
+    contract_title: 'string',
+    contract_number: 'string',
+    effective_date: 'date',
+    expiry_date: 'date',
+    parties: ['string'],
+    key_terms: ['string'],
+    payment_terms: 'string',
+    termination_clause: 'string',
+  },
+  'Medical Report': {
+    patient_name: 'string',
+    patient_id: 'string',
+    report_date: 'date',
+    provider_name: 'string',
+    diagnosis: ['string'],
+    medications: ['string'],
+    recommendations: ['string'],
+  },
+  'Bank Statement': {
+    account_holder: 'string',
+    account_number_last4: 'string',
+    bank_name: 'string',
+    statement_period_start: 'date',
+    statement_period_end: 'date',
+    opening_balance: 'number',
+    closing_balance: 'number',
+    transactions: [
+      {
+        date: 'date',
+        description: 'string',
+        debit: 'number',
+        credit: 'number',
+        balance: 'number',
+      },
+    ],
+  },
   Custom: {
     field_name: 'string',
     another_field: 'number',
@@ -80,3 +117,10 @@ export const schemaTemplates = {
 } satisfies Record<string, JsonValue>
 
 export const defaultSchemaText = JSON.stringify(schemaTemplates.Resume, null, 2)
+
+export function schemaTemplateForDocumentType(documentType: string): JsonValue {
+  if (documentType in schemaTemplates) {
+    return schemaTemplates[documentType as keyof typeof schemaTemplates]
+  }
+  return schemaTemplates.Custom
+}

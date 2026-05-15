@@ -47,6 +47,8 @@ export function UsagePage() {
   })
 
   const usage = usageSummaryQuery.data
+  const dailyCost = usage?.daily_usage_cost ?? []
+  const maxDailyCost = Math.max(...dailyCost.map((point) => point.cost_usd), 0)
 
   return (
     <div className="grid gap-6">
@@ -175,6 +177,38 @@ export function UsagePage() {
           </dl>
         </Panel>
       </section>
+
+      <Panel
+        title="Daily usage cost"
+        description="Last 30 days estimated usage cost in USD (x: day, y: USD)."
+      >
+        {dailyCost.length === 0 ? (
+          <div className="h-40 animate-pulse rounded-lg bg-slate-100" />
+        ) : (
+          <div className="grid gap-3">
+            <div className="flex h-44 items-end gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-3">
+              {dailyCost.map((point) => {
+                const height = maxDailyCost > 0 ? Math.max((point.cost_usd / maxDailyCost) * 100, point.cost_usd > 0 ? 4 : 0) : 0
+                const day = new Date(point.date).getDate()
+                return (
+                  <div key={point.date} className="group flex min-w-0 flex-1 flex-col items-center justify-end">
+                    <div
+                      className="w-full rounded-sm bg-slate-900 transition group-hover:bg-slate-700"
+                      style={{ height: `${height}%` }}
+                      title={`$${point.cost_usd.toFixed(4)} · ${point.requests_used} calls`}
+                    />
+                    <span className="mt-1 text-[10px] text-slate-500">{day}</span>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span>{dailyCost[0] ? formatDate(dailyCost[0].date) : ''}</span>
+              <span>Today</span>
+            </div>
+          </div>
+        )}
+      </Panel>
     </div>
   )
 }
